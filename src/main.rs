@@ -13,16 +13,17 @@ struct Person {
 }
 
 fn params() -> (ConnectParams, SslMode) {
-    let conf = Ini::load_from_file("conf.ini").unwrap();
+    let mut conf = Ini::load_from_file(".phonebookrc").unwrap();
+    let general = conf.general_section();
 
-    let host = conf.get("host").unwrap();
-    let port = conf.get("port").unwrap();
-    let sslmode = conf.get("sslmode").unwrap();
-    let dbname = conf.get("dbname").unwrap();
-    let user = conf.get("user").unwrap();
-    let pass = conf.get("pass").unwrap();
+    let host = general.get("host").unwrap();
+    let port = general.get("port").unwrap();
+    let sslmode = general.get("sslmode").unwrap();
+    let dbname = general.get("dbname").unwrap();
+    let user = general.get("user").unwrap();
+    let pass = general.get("pass").unwrap();
 
-    let s = match sslmode {
+    let s = match sslmode.as_ref() {
         "disable" => SslMode::None,
         "enable" => unimplemented!(),
         _ => panic!("Wrong sslmode"),
