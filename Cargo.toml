@@ -2,3 +2,7 @@
 name = "rust-phonebook"
 version = "0.1.0"
 authors = ["Michael Pankov <work@michaelpankov.com>"]
+
+[dependencies]
+
+postgres = "0.9"
