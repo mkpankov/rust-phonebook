@@ -6,3 +6,4 @@ authors = ["Michael Pankov <work@michaelpankov.com>"]
 [dependencies]
 
 postgres = "0.9"
+rust-ini = "*"
