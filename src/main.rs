@@ -1,8 +1,8 @@
-extern crate postgres;
 extern crate ini;
+extern crate postgres;
 
-use postgres::{Connection, ConnectParams, ConnectTarget, SslMode, UserInfo};
 use ini::Ini;
+use postgres::{Connection, ConnectParams, ConnectTarget, SslMode, UserInfo};
 
 use std::str::FromStr;
 
@@ -37,12 +37,43 @@ fn params() -> (ConnectParams, SslMode) {
 
 fn main() {
     let (params, sslmode) = params();
-    let conn = Connection::connect(params, &sslmode).unwrap();
+    let db = Connection::connect(params, &sslmode).unwrap();
 
-    conn.execute(
+    db.execute(
         concat!(r#"CREATE TABLE IF NOT EXISTS phonebook"#,
                 r#"("id" SERIAL PRIMARY KEY, "name" varchar(50),"#,
                 r#" "phone" varchar(100))"#,
                 ),
-        &[]).unwrap();
+        &[]
+            ).unwrap();
+
+    let mut args = std::env::args();
+    match args.nth(1) {
+        Some(text) => {
+            match text.as_ref() {
+                "add" => {
+                    if args.len() != 4 {
+                        panic!("Usage: phonebook add NAME PHONE")
+                    };
+                    let r = insert(
+                        db,
+                        &args.nth(2).unwrap(),
+                        &args.nth(3).unwrap()
+                            ).unwrap();
+                    println!("{} rows affected", r);
+                },
+                "del" => {},
+                "edit" => {},
+                "show" => {},
+                "help" => {},
+                command @ _  => panic!(
+                    format!("Invalid command: {}", command))
+            }
+        }
+        None => panic!("No command supplied"),
+    }
+}
+
+fn insert(db: Connection, name: &str, phone: &str) -> postgres::Result<u64> {
+    Ok(0)
 }
