@@ -41,8 +41,8 @@ fn params() -> (ConnectParams, SslMode) {
 }
 
 fn main() {
-    let conn = Connection::connect("postgres://postgres:postgres@localhost", &SslMode::None)
-            .unwrap();
+    let (params, sslmode) = params();
+    let conn = Connection::connect(params, &sslmode).unwrap();
 
     conn.execute("CREATE TABLE person (
                     id              SERIAL PRIMARY KEY,
