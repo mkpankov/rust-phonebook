@@ -13,7 +13,7 @@ struct Person {
 }
 
 fn params() -> (ConnectParams, SslMode) {
-    let mut conf = Ini::load_from_file(".phonebookrc").unwrap();
+    let conf = Ini::load_from_file(".phonebookrc").unwrap();
     let general = conf.general_section();
 
     let host = general.get("host").unwrap();
