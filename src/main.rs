@@ -3,6 +3,8 @@ extern crate postgres;
 
 use ini::Ini;
 use postgres::{Connection, ConnectParams, ConnectTarget, SslMode, UserInfo};
+use postgres::types::FromSql;
+use postgres::rows::Row;
 
 use std::str::FromStr;
 
@@ -116,24 +118,70 @@ fn main() {
 }
 
 fn insert(db: Connection, name: &str, phone: &str) -> postgres::Result<u64> {
-    Ok(0)
+    db.execute("INSERT INTO phonebook VALUES (default, $1, $2)", &[&name, &phone])
 }
 
 fn remove(db: Connection, ids: Vec<String>) -> postgres::Result<u64> {
+    let stmt = db.prepare("DELETE FROM phonebook WHERE id=%1").unwrap();
+    for id in ids {
+        try!(stmt.execute(&[&id]));
+    }
     Ok(0)
 }
 
 fn update(db: Connection, id: &str, name: &str, phone: &str)
-          -> postgres::Result<u64> {
-    Ok(0)
+          -> postgres::Result<()> {
+    let tx: postgres::Transaction = db.transaction().unwrap();
+    let _ = tx.execute(
+        "UPDATE phonebook SET name = $1, phone = $2 WHERE id = $3",
+        &[&name, &phone, &id]);
+    tx.finish()
+}
+
+trait NamedRow<'a> {
+    fn get_named<T>(&self, name: &str) -> T
+        where T: FromSql;
+}
+
+impl<'a> NamedRow<'a> for Row<'a> {
+    fn get_named<T>(&self, name: &str) -> T
+        where T: FromSql
+    {
+        use postgres::Column;
+        let columns = self.columns();
+        for (i, n) in columns.iter().map(Column::name).enumerate() {
+            if n == name {
+                return self.get(i);
+            }
+        }
+        panic!("Couldn't find column with given name");
+    }
 }
 
 fn show(db: Connection, arg: Option<&str>) -> postgres::Result<Vec<Record>> {
-    Ok(vec![Record { id: 0, name: "Foo".to_owned(), phone: "123".to_owned() }])
+    let s = match arg {
+        Some(s) => format!("WHERE name LIKE '%{}'", s),
+        None => "".to_owned(),
+    };
+    let stmt = db.prepare(
+        &format!("SELECT * FROM phonebook {} ORDER BY id", s)
+            ).unwrap();
+    let rows = stmt.query(&[]).unwrap();
+    let size = rows.iter().count();
+    let mut results = Vec::with_capacity(size);
+    for row in rows {
+        let record = Record {
+            id: row.get_named("id"),
+            name: row.get_named("name"),
+            phone: row.get_named("phone"),
+        };
+        results.push(record)
+    }
+    Ok(results)
 }
 
 struct Record {
-    id: isize,
+    id: i64,
     name: String,
     phone: String,
 }
