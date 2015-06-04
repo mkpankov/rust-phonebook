@@ -75,18 +75,24 @@ fn main() {
                     if args.len() < 3 {
                         panic!("Usage: phonebook del ID...");
                     }
+                    let ids: Vec<i32> =
+                        args[2..].iter()
+                        .map(|s| s.parse().unwrap())
+                        .collect();
+
                     remove(
                         db,
-                        &args[2..]
+                        &ids
                             ).unwrap();
                 },
                 "edit" => {
                     if args.len() != 5 {
                         panic!("Usage: phonebook edit ID NAME PHONE");
                     }
+                    let id = args[2].parse().unwrap();
                     update(
                         db,
-                        &args[2],
+                        id,
                         &args[3],
                         &args[4]
                             ).unwrap();
@@ -119,7 +125,7 @@ fn insert(db: Connection, name: &str, phone: &str) -> postgres::Result<u64> {
     db.execute("INSERT INTO phonebook VALUES (default, $1, $2)", &[&name, &phone])
 }
 
-fn remove(db: Connection, ids: &[String]) -> postgres::Result<u64> {
+fn remove(db: Connection, ids: &[i32]) -> postgres::Result<u64> {
     let stmt = db.prepare("DELETE FROM phonebook WHERE id=%1").unwrap();
     for id in ids {
         try!(stmt.execute(&[id]));
@@ -127,7 +133,7 @@ fn remove(db: Connection, ids: &[String]) -> postgres::Result<u64> {
     Ok(0)
 }
 
-fn update(db: Connection, id: &str, name: &str, phone: &str)
+fn update(db: Connection, id: i32, name: &str, phone: &str)
           -> postgres::Result<()> {
     let tx: postgres::Transaction = db.transaction().unwrap();
     let _ = tx.execute(
