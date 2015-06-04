@@ -3,8 +3,6 @@ extern crate postgres;
 
 use ini::Ini;
 use postgres::{Connection, ConnectParams, ConnectTarget, SslMode, UserInfo};
-use postgres::types::FromSql;
-use postgres::rows::Row;
 
 use std::str::FromStr;
 
@@ -138,20 +136,6 @@ fn update(db: Connection, id: &str, name: &str, phone: &str)
     tx.finish()
 }
 
-trait NamedRow<'a> {
-    fn get_named<T>(&self, name: &str) -> T
-        where T: FromSql;
-}
-
-impl<'a> NamedRow<'a> for Row<'a> {
-    fn get_named<T>(&self, name: &str) -> T
-        where T: FromSql
-    {
-        let columns = self.columns();
-        self.get(columns.iter().position(|c| c.name() == name).unwrap())
-    }
-}
-
 fn show(db: Connection, arg: Option<&str>) -> postgres::Result<Vec<Record>> {
     let s = match arg {
         Some(s) => format!("WHERE name LIKE '%{}'", s),
@@ -165,9 +149,9 @@ fn show(db: Connection, arg: Option<&str>) -> postgres::Result<Vec<Record>> {
     let mut results = Vec::with_capacity(size);
     for row in rows {
         let record = Record {
-            id: row.get_named("id"),
-            name: row.get_named("name"),
-            phone: row.get_named("phone"),
+            id: row.get("id"),
+            name: row.get("name"),
+            phone: row.get("phone"),
         };
         results.push(record)
     }
@@ -175,7 +159,7 @@ fn show(db: Connection, arg: Option<&str>) -> postgres::Result<Vec<Record>> {
 }
 
 struct Record {
-    id: i64,
+    id: i32,
     name: String,
     phone: String,
 }
