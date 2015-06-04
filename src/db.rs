@@ -24,7 +24,7 @@ pub fn update(db: Connection, id: i32, name: &str, phone: &str)
 
 pub fn show(db: Connection, arg: Option<&str>) -> ::postgres::Result<Vec<Record>> {
     let s = match arg {
-        Some(s) => format!("WHERE name LIKE '%{}'", s),
+        Some(s) => format!("WHERE name LIKE '%{}%'", s),
         None => "".to_owned(),
     };
     let stmt = db.prepare(
