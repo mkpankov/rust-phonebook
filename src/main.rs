@@ -66,38 +66,28 @@ fn main() {
                     if args.len() != 4 {
                         panic!("Usage: phonebook add NAME PHONE");
                     }
-                    let r = db::insert(
-                        db,
-                        &args[2],
-                        &args[3]
-                            ).unwrap();
+                    let r = db::insert(db, &args[2], &args[3])
+                        .unwrap();
                     println!("{} rows affected", r);
                 },
                 "del" => {
                     if args.len() < 3 {
                         panic!("Usage: phonebook del ID...");
                     }
-                    let ids: Vec<i32> =
-                        args[2..].iter()
+                    let ids: Vec<i32> = args[2..].iter()
                         .map(|s| s.parse().unwrap())
                         .collect();
 
-                    db::remove(
-                        db,
-                        &ids
-                            ).unwrap();
+                    db::remove(db, &ids)
+                        .unwrap();
                 },
                 "edit" => {
                     if args.len() != 5 {
                         panic!("Usage: phonebook edit ID NAME PHONE");
                     }
                     let id = args[2].parse().unwrap();
-                    db::update(
-                        db,
-                        id,
-                        &args[3],
-                        &args[4]
-                            ).unwrap();
+                    db::update(db, id, &args[3], &args[4])
+                        .unwrap();
                 },
                 "show" => {
                     if args.len() > 3 {
