@@ -3,7 +3,7 @@ name = "rust-phonebook"
 version = "0.1.0"
 dependencies = [
  "postgres 0.9.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "rust-ini 0.6.0 (git+https://github.com/zonyitoo/rust-ini/)",
+ "rust-ini 0.7.1 (git+https://github.com/zonyitoo/rust-ini/)",
 ]
 
 [[package]]
@@ -108,8 +108,8 @@ dependencies = [
 
 [[package]]
 name = "rust-ini"
-version = "0.6.0"
-source = "git+https://github.com/zonyitoo/rust-ini/#0b3a3894919194ef6f099375d817095f0ee2ab05"
+version = "0.7.1"
+source = "git+https://github.com/zonyitoo/rust-ini/#b5ea1df950f57fe289dd0d4badcce6c4ee4c70ab"
 dependencies = [
  "log 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
