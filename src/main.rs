@@ -126,7 +126,7 @@ fn insert(db: Connection, name: &str, phone: &str) -> postgres::Result<u64> {
 }
 
 fn remove(db: Connection, ids: &[i32]) -> postgres::Result<u64> {
-    let stmt = db.prepare("DELETE FROM phonebook WHERE id=%1").unwrap();
+    let stmt = db.prepare("DELETE FROM phonebook WHERE id=$1").unwrap();
     for id in ids {
         try!(stmt.execute(&[id]));
     }
