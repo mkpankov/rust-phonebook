@@ -4,7 +4,9 @@ version = "0.1.0"
 authors = ["Michael Pankov <work@michaelpankov.com>"]
 
 [dependencies]
+iron = "*"
 postgres = "0.9"
+router = "*"
 
 [dependencies.rust-ini]
 git = "https://github.com/zonyitoo/rust-ini/"

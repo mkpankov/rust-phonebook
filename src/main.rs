@@ -1,7 +1,10 @@
 extern crate ini;
+extern crate iron;
 extern crate postgres;
+extern crate router;
 
 use ini::Ini;
+use iron::*;
 use postgres::{Connection, ConnectParams, ConnectTarget, SslMode, UserInfo};
 
 use std::str::FromStr;
@@ -57,6 +60,19 @@ fn main() {
                 ),
         &[]
             ).unwrap();
+
+    let mut router = router::Router::new();
+    router.get("/api/v1/records",
+               |_req: &mut Request| Ok(Response::with((status::Ok, "records"))));
+    router.get("/api/v1/records/:id",
+               |_req: &mut Request| Ok(Response::with((status::Ok, "record"))));
+    router.post("/api/v1/records",
+                |_req: &mut Request| Ok(Response::with((status::Ok, "add_record"))));
+    router.put("/api/v1/records/:id",
+               |_req: &mut Request| Ok(Response::with((status::Ok, "put_record"))));
+    router.delete("/api/v1/records/:id",
+                  |_req: &mut Request| Ok(Response::with((status::Ok, "delete_record"))));
+    Iron::new(router).http("localhost:3000").unwrap();
 
     let args: Vec<String> = std::env::args().collect();
     match args.get(1) {
