@@ -147,14 +147,8 @@ impl<'a> NamedRow<'a> for Row<'a> {
     fn get_named<T>(&self, name: &str) -> T
         where T: FromSql
     {
-        use postgres::Column;
         let columns = self.columns();
-        for (i, n) in columns.iter().map(Column::name).enumerate() {
-            if n == name {
-                return self.get(i);
-            }
-        }
-        panic!("Couldn't find column with given name");
+        self.get(columns.iter().position(|c| c.name() == name).unwrap())
     }
 }
 
