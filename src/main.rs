@@ -6,6 +6,15 @@ use postgres::{Connection, ConnectParams, ConnectTarget, SslMode, UserInfo};
 
 use std::str::FromStr;
 
+const HELP: &'static str = "Usage: phonebook COMMAND [ARG]...
+Commands:
+	add NAME PHONE - create new record;
+	del ID1 ID2... - delete record;
+	edit ID        - edit record;
+	show           - display all records;
+	show STRING    - display records which contain a given substring in the name;
+	help           - display this help.";
+
 fn params() -> (ConnectParams, SslMode) {
     let conf = Ini::load_from_file(".phonebookrc").unwrap();
     let general = conf.general_section();
@@ -53,8 +62,8 @@ fn main() {
             match text.as_ref() {
                 "add" => {
                     if args.len() != 4 {
-                        panic!("Usage: phonebook add NAME PHONE")
-                    };
+                        panic!("Usage: phonebook add NAME PHONE");
+                    }
                     let r = insert(
                         db,
                         &args.nth(2).unwrap(),
@@ -62,10 +71,42 @@ fn main() {
                             ).unwrap();
                     println!("{} rows affected", r);
                 },
-                "del" => {},
-                "edit" => {},
-                "show" => {},
-                "help" => {},
+                "del" => {
+                    if args.len() < 3 {
+                        panic!("Usage: phonebook del ID...");
+                    }
+                    remove(
+                        db,
+                        args.skip(2).collect()
+                            ).unwrap();
+                },
+                "edit" => {
+                    if args.len() != 5 {
+                        panic!("Usage: phonebook edit ID NAME PHONE");
+                    }
+                    update(
+                        db,
+                        &args.nth(2).unwrap(),
+                        &args.nth(3).unwrap(),
+                        &args.nth(4).unwrap()
+                            ).unwrap();
+                },
+                "show" => {
+                    if args.len() > 3 {
+                        panic!("Usage: phonebook show [SUBSTRING]");
+                    }
+                    let s;
+                    if args.len() == 3 {
+                        s = args.nth(2);
+                    } else {
+                        s = None;
+                    }
+                    let r = show(db, s.as_ref().map(|s| &s[..])).unwrap();
+                    format(&r);
+                },
+                "help" => {
+                    println!("{}", HELP);
+                },
                 command @ _  => panic!(
                     format!("Invalid command: {}", command))
             }
@@ -76,4 +117,33 @@ fn main() {
 
 fn insert(db: Connection, name: &str, phone: &str) -> postgres::Result<u64> {
     Ok(0)
+}
+
+fn remove(db: Connection, ids: Vec<String>) -> postgres::Result<u64> {
+    Ok(0)
+}
+
+fn update(db: Connection, id: &str, name: &str, phone: &str)
+          -> postgres::Result<u64> {
+    Ok(0)
+}
+
+fn show(db: Connection, arg: Option<&str>) -> postgres::Result<Vec<Record>> {
+    Ok(vec![Record { id: 0, name: "Foo".to_owned(), phone: "123".to_owned() }])
+}
+
+struct Record {
+    id: isize,
+    name: String,
+    phone: String,
+}
+
+fn format(rs: &[Record]) {
+    let max = rs.iter().fold(
+        0,
+        |acc, ref item|
+        if item.name.len() > acc { item.name.len() } else { acc });
+    for v in rs {
+        println!("{:3}   {:.*}   {}", v.id, max, v.name, v.phone);
+    }
 }
