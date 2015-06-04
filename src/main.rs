@@ -136,9 +136,10 @@ fn remove(db: Connection, ids: &[i32]) -> postgres::Result<u64> {
 fn update(db: Connection, id: i32, name: &str, phone: &str)
           -> postgres::Result<()> {
     let tx: postgres::Transaction = db.transaction().unwrap();
-    let _ = tx.execute(
+    tx.execute(
         "UPDATE phonebook SET name = $1, phone = $2 WHERE id = $3",
-        &[&name, &phone, &id]);
+        &[&name, &phone, &id]).unwrap();
+    tx.set_commit();
     tx.finish()
 }
 
