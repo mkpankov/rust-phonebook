@@ -58,8 +58,8 @@ fn main() {
         &[]
             ).unwrap();
 
-    let mut args = std::env::args();
-    match args.nth(1) {
+    let args: Vec<String> = std::env::args().collect();
+    match args.get(1) {
         Some(text) => {
             match text.as_ref() {
                 "add" => {
@@ -68,8 +68,8 @@ fn main() {
                     }
                     let r = insert(
                         db,
-                        &args.nth(2).unwrap(),
-                        &args.nth(3).unwrap()
+                        &args[2],
+                        &args[3]
                             ).unwrap();
                     println!("{} rows affected", r);
                 },
@@ -79,7 +79,7 @@ fn main() {
                     }
                     remove(
                         db,
-                        args.skip(2).collect()
+                        &args[2..]
                             ).unwrap();
                 },
                 "edit" => {
@@ -88,9 +88,9 @@ fn main() {
                     }
                     update(
                         db,
-                        &args.nth(2).unwrap(),
-                        &args.nth(3).unwrap(),
-                        &args.nth(4).unwrap()
+                        &args[2],
+                        &args[3],
+                        &args[4]
                             ).unwrap();
                 },
                 "show" => {
@@ -99,7 +99,7 @@ fn main() {
                     }
                     let s;
                     if args.len() == 3 {
-                        s = args.nth(2);
+                        s = args.get(2);
                     } else {
                         s = None;
                     }
@@ -121,10 +121,10 @@ fn insert(db: Connection, name: &str, phone: &str) -> postgres::Result<u64> {
     db.execute("INSERT INTO phonebook VALUES (default, $1, $2)", &[&name, &phone])
 }
 
-fn remove(db: Connection, ids: Vec<String>) -> postgres::Result<u64> {
+fn remove(db: Connection, ids: &[String]) -> postgres::Result<u64> {
     let stmt = db.prepare("DELETE FROM phonebook WHERE id=%1").unwrap();
     for id in ids {
-        try!(stmt.execute(&[&id]));
+        try!(stmt.execute(&[id]));
     }
     Ok(0)
 }
