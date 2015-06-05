@@ -155,12 +155,10 @@ fn get_records(sdb: Arc<Mutex<Connection>>, req: &mut Request) -> IronResult<Res
                 _ => return Ok(Response::with((status::BadRequest, "unexpected query parameters"))),
             }
         }
-    } else {
-        return Ok(Response::with((status::BadRequest, "no record to find specified")));
     }
 
     let mut json_records;
-    if let Ok(recs) = db::read(sdb, &name.unwrap()) {
+    if let Ok(recs) = db::read(sdb, name.as_ref().map(|s| &s[..])) {
         use rustc_serialize::json;
         if let Ok(json) = json::encode(&recs) {
             json_records = Some(json);

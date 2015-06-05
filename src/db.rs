@@ -63,8 +63,8 @@ pub fn format(rs: &[Record]) {
     }
 }
 
-pub fn read(sdb: Arc<Mutex<Connection>>, name: &str) -> Result<Vec<Record>, ()> {
-    if let Ok(rs) = show(&*sdb.lock().unwrap(), Some(name)) {
+pub fn read(sdb: Arc<Mutex<Connection>>, name: Option<&str>) -> Result<Vec<Record>, ()> {
+    if let Ok(rs) = show(&*sdb.lock().unwrap(), name) {
         Ok(rs)
     } else {
         Err(())
