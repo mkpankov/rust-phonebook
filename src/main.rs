@@ -9,7 +9,9 @@ use ini::Ini;
 use iron::*;
 use iron::mime::{Mime, TopLevel, SubLevel};
 use postgres::{Connection, ConnectParams, ConnectTarget, SslMode, UserInfo};
+use rustc_serialize::json;
 
+use std::io::Read;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
 
@@ -73,7 +75,7 @@ fn main() {
                     if args.len() != 4 {
                         panic!("Usage: phonebook add NAME PHONE");
                     }
-                    let r = db::insert(db, &args[2], &args[3])
+                    let r = db::insert(&db, &args[2], &args[3])
                         .unwrap();
                     println!("{} rows affected", r);
                 },
@@ -127,9 +129,13 @@ fn main() {
                                    move |req: &mut Request|
                                    get_record(sdb_.clone(), req));
                     }
-                    router.post("/api/v1/records",
-                                |_req: &mut Request|
-                                Ok(Response::with((status::Ok, "add_record"))));
+                    {
+                        let sdb_ = sdb.clone();
+                        router.post("/api/v1/records",
+                                move |req: &mut Request|
+                                add_record(sdb_.clone(), req));
+                    }
+
                     router.put("/api/v1/records/:id",
                                |_req: &mut Request|
                                Ok(Response::with((status::Ok, "put_record"))));
@@ -195,7 +201,6 @@ fn get_record(sdb: Arc<Mutex<Connection>>, req: &mut Request) -> IronResult<Resp
 
     let mut json_record;
     if let Ok(recs) = db::read_one(sdb, id) {
-        use rustc_serialize::json;
         if let Ok(json) = json::encode(&recs) {
             json_record = Some(json);
         } else {
@@ -209,4 +214,19 @@ fn get_record(sdb: Arc<Mutex<Connection>>, req: &mut Request) -> IronResult<Resp
 
     Ok(Response::with(
         (content_type, status::Ok, json_record.unwrap())))
+}
+
+fn add_record(sdb: Arc<Mutex<Connection>>, req: &mut Request) -> IronResult<Response> {
+    let mut body = String::new();
+    req.body.read_to_string(&mut body).unwrap();
+    let decoded: json::DecodeResult<db::Record> = json::decode(&body);
+    if let Ok(record) = decoded {
+        if let Ok(_) = db::insert(&*sdb.lock().unwrap(), &record.name, &record.phone) {
+            Ok(Response::with((status::Created)))
+        } else {
+            Ok(Response::with((status::InternalServerError, "couldn't insert record")))
+        }
+    } else {
+        return Ok(Response::with((status::BadRequest, "couldn't decode JSON")));
+    }
 }

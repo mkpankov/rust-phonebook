@@ -2,7 +2,7 @@ use postgres::{Connection};
 
 use std::sync::{Arc, Mutex};
 
-pub fn insert(db: Connection, name: &str, phone: &str) -> ::postgres::Result<u64> {
+pub fn insert(db: &Connection, name: &str, phone: &str) -> ::postgres::Result<u64> {
     db.execute("INSERT INTO phonebook VALUES (default, $1, $2)", &[&name, &phone])
 }
 
@@ -46,11 +46,11 @@ pub fn show(db: &Connection, arg: Option<&str>) -> ::postgres::Result<Vec<Record
     Ok(results)
 }
 
-#[derive(RustcEncodable)]
+#[derive(RustcEncodable, RustcDecodable)]
 pub struct Record {
-    id: i32,
-    name: String,
-    phone: String,
+    id: Option<i32>,
+    pub name: String,
+    pub phone: String,
 }
 
 pub fn format(rs: &[Record]) {
@@ -59,7 +59,7 @@ pub fn format(rs: &[Record]) {
         |acc, ref item|
         if item.name.len() > acc { item.name.len() } else { acc });
     for v in rs {
-        println!("{:3}   {:.*}   {}", v.id, max, v.name, v.phone);
+        println!("{:3?}   {:.*}   {}", v.id, max, v.name, v.phone);
     }
 }
 
