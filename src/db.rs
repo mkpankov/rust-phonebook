@@ -1,5 +1,7 @@
 use postgres::{Connection};
 
+use std::sync::{Arc, Mutex};
+
 pub fn insert(db: Connection, name: &str, phone: &str) -> ::postgres::Result<u64> {
     db.execute("INSERT INTO phonebook VALUES (default, $1, $2)", &[&name, &phone])
 }
@@ -22,7 +24,7 @@ pub fn update(db: Connection, id: i32, name: &str, phone: &str)
     tx.finish()
 }
 
-pub fn show(db: Connection, arg: Option<&str>) -> ::postgres::Result<Vec<Record>> {
+pub fn show(db: &Connection, arg: Option<&str>) -> ::postgres::Result<Vec<Record>> {
     let s = match arg {
         Some(s) => format!("WHERE name LIKE '%{}%'", s),
         None => "".to_owned(),
@@ -44,6 +46,7 @@ pub fn show(db: Connection, arg: Option<&str>) -> ::postgres::Result<Vec<Record>
     Ok(results)
 }
 
+#[derive(RustcEncodable)]
 pub struct Record {
     id: i32,
     name: String,
@@ -57,5 +60,13 @@ pub fn format(rs: &[Record]) {
         if item.name.len() > acc { item.name.len() } else { acc });
     for v in rs {
         println!("{:3}   {:.*}   {}", v.id, max, v.name, v.phone);
+    }
+}
+
+pub fn read(sdb: Arc<Mutex<Connection>>, name: &str) -> Result<Vec<Record>, ()> {
+    if let Ok(rs) = show(&*sdb.lock().unwrap(), Some(name)) {
+        Ok(rs)
+    } else {
+        Err(())
     }
 }

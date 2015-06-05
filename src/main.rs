@@ -2,12 +2,16 @@ extern crate ini;
 extern crate iron;
 extern crate postgres;
 extern crate router;
+extern crate rustc_serialize;
+extern crate url;
 
 use ini::Ini;
 use iron::*;
+use iron::mime::{Mime, TopLevel, SubLevel};
 use postgres::{Connection, ConnectParams, ConnectTarget, SslMode, UserInfo};
 
 use std::str::FromStr;
+use std::sync::{Arc, Mutex};
 
 mod db;
 
@@ -61,19 +65,6 @@ fn main() {
         &[]
             ).unwrap();
 
-    let mut router = router::Router::new();
-    router.get("/api/v1/records",
-               |_req: &mut Request| Ok(Response::with((status::Ok, "records"))));
-    router.get("/api/v1/records/:id",
-               |_req: &mut Request| Ok(Response::with((status::Ok, "record"))));
-    router.post("/api/v1/records",
-                |_req: &mut Request| Ok(Response::with((status::Ok, "add_record"))));
-    router.put("/api/v1/records/:id",
-               |_req: &mut Request| Ok(Response::with((status::Ok, "put_record"))));
-    router.delete("/api/v1/records/:id",
-                  |_req: &mut Request| Ok(Response::with((status::Ok, "delete_record"))));
-    Iron::new(router).http("localhost:3000").unwrap();
-
     let args: Vec<String> = std::env::args().collect();
     match args.get(1) {
         Some(text) => {
@@ -115,16 +106,73 @@ fn main() {
                     } else {
                         s = None;
                     }
-                    let r = db::show(db, s.as_ref().map(|s| &s[..])).unwrap();
+                    let r = db::show(&db, s.as_ref().map(|s| &s[..])).unwrap();
                     db::format(&r);
                 },
                 "help" => {
                     println!("{}", HELP);
                 },
+                "serve" => {
+                    let sdb = Arc::new(Mutex::new(db));
+                    let mut router = router::Router::new();
+                    router.get("/api/v1/records",
+                               move |req: &mut Request| get_records(sdb.clone(), req));
+                    router.get("/api/v1/records/:id",
+                               |_req: &mut Request|
+                               Ok(Response::with((status::Ok, "record"))));
+                    router.post("/api/v1/records",
+                                |_req: &mut Request|
+                                Ok(Response::with((status::Ok, "add_record"))));
+                    router.put("/api/v1/records/:id",
+                               |_req: &mut Request|
+                               Ok(Response::with((status::Ok, "put_record"))));
+                    router.delete("/api/v1/records/:id",
+                                  |_req: &mut Request|
+                                  Ok(Response::with((status::Ok, "delete_record"))));
+                    Iron::new(router).http("localhost:3000").unwrap();
+                }
                 command @ _  => panic!(
                     format!("Invalid command: {}", command))
             }
         }
         None => panic!("No command supplied"),
     }
+}
+
+fn get_records(sdb: Arc<Mutex<Connection>>, req: &mut Request) -> IronResult<Response> {
+    let url = req.url.clone().into_generic_url();
+    let mut name: Option<String> = None;
+    if let Some(qp) = url.query_pairs() {
+        for (key, value) in qp {
+            match (&key[..], value) {
+                ("name", n) => {
+                    if let None = name {
+                        name = Some(n);
+                    } else {
+                        return Ok(Response::with((status::BadRequest, "passed name in query more than once")));
+                    }
+                }
+                _ => return Ok(Response::with((status::BadRequest, "unexpected query parameters"))),
+            }
+        }
+    } else {
+        return Ok(Response::with((status::BadRequest, "no record to find specified")));
+    }
+
+    let mut json_records;
+    if let Ok(recs) = db::read(sdb, &name.unwrap()) {
+        use rustc_serialize::json;
+        if let Ok(json) = json::encode(&recs) {
+            json_records = Some(json);
+        } else {
+            return Ok(Response::with((status::InternalServerError, "couldn't convert records to JSON")));
+        }
+    } else {
+        return Ok(Response::with((status::InternalServerError, "couldn't read records from database")));
+    }
+    let content_type = Mime(
+        TopLevel::Application, SubLevel::Json, Vec::new());
+
+    Ok(Response::with(
+        (content_type, status::Ok, json_records.unwrap())))
 }

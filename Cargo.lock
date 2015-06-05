@@ -6,6 +6,8 @@ dependencies = [
  "postgres 0.9.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "router 0.0.10 (registry+https://github.com/rust-lang/crates.io-index)",
  "rust-ini 0.7.1 (git+https://github.com/zonyitoo/rust-ini/)",
+ "rustc-serialize 0.3.14 (registry+https://github.com/rust-lang/crates.io-index)",
+ "url 0.2.35 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
