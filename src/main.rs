@@ -116,7 +116,8 @@ fn main() {
                     let sdb = Arc::new(Mutex::new(db));
                     let mut router = router::Router::new();
                     router.get("/api/v1/records",
-                               move |req: &mut Request| get_records(sdb.clone(), req));
+                               move |req: &mut Request|
+                               get_records(sdb.clone(), req));
                     router.get("/api/v1/records/:id",
                                |_req: &mut Request|
                                Ok(Response::with((status::Ok, "record"))));
