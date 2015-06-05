@@ -57,9 +57,9 @@ pub fn format(rs: &[Record]) {
     let max = rs.iter().fold(
         0,
         |acc, ref item|
-        if item.name.len() > acc { item.name.len() } else { acc });
+        if item.name.chars().count() > acc { item.name.chars().count() } else { acc });
     for v in rs {
-        println!("{:3?}   {:.*}   {}", v.id.unwrap(), max, v.name, v.phone);
+        println!("{:3?}   {3:2$}   {}", v.id.unwrap(), v.name, max, v.phone);
     }
 }
 
