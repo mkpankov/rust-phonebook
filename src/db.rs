@@ -70,3 +70,26 @@ pub fn read(sdb: Arc<Mutex<Connection>>, name: Option<&str>) -> Result<Vec<Recor
         Err(())
     }
 }
+
+pub fn read_one(sdb: Arc<Mutex<Connection>>, id: i32) -> Result<Record, ()> {
+    let db = &*sdb.lock().unwrap();
+    let stmt = db.prepare(
+        "SELECT * FROM phonebook WHERE id = $1"
+            ).unwrap();
+    if let Ok(rows) = stmt.query(&[&id]) {
+        let mut iter = rows.iter();
+        if iter.len() != 1 {
+            return Err(())
+        }
+        let row = iter.next().unwrap();
+        let record = Record {
+            id: row.get("id"),
+            name: row.get("name"),
+            phone: row.get("phone"),
+        };
+
+        Ok(record)
+    } else {
+        Err(())
+    }
+}

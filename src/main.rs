@@ -115,12 +115,18 @@ fn main() {
                 "serve" => {
                     let sdb = Arc::new(Mutex::new(db));
                     let mut router = router::Router::new();
-                    router.get("/api/v1/records",
-                               move |req: &mut Request|
-                               get_records(sdb.clone(), req));
-                    router.get("/api/v1/records/:id",
-                               |_req: &mut Request|
-                               Ok(Response::with((status::Ok, "record"))));
+                    {
+                        let sdb_ = sdb.clone();
+                        router.get("/api/v1/records",
+                                   move |req: &mut Request|
+                                   get_records(sdb_.clone(), req));
+                    }
+                    {
+                        let sdb_ = sdb.clone();
+                        router.get("/api/v1/records/:id",
+                                   move |req: &mut Request|
+                                   get_record(sdb_.clone(), req));
+                    }
                     router.post("/api/v1/records",
                                 |_req: &mut Request|
                                 Ok(Response::with((status::Ok, "add_record"))));
@@ -174,4 +180,33 @@ fn get_records(sdb: Arc<Mutex<Connection>>, req: &mut Request) -> IronResult<Res
 
     Ok(Response::with(
         (content_type, status::Ok, json_records.unwrap())))
+}
+
+fn get_record(sdb: Arc<Mutex<Connection>>, req: &mut Request) -> IronResult<Response> {
+    let url = req.url.clone().into_generic_url();
+    let path = url.path().unwrap();
+    let sid: &str = &path.iter().last().unwrap();
+    let id;
+    if let Ok(r) = sid.parse() {
+        id = r;
+    } else {
+        return Ok(Response::with((status::BadRequest, "bad id")));        
+    }
+
+    let mut json_record;
+    if let Ok(recs) = db::read_one(sdb, id) {
+        use rustc_serialize::json;
+        if let Ok(json) = json::encode(&recs) {
+            json_record = Some(json);
+        } else {
+            return Ok(Response::with((status::InternalServerError, "couldn't convert records to JSON")));
+        }
+    } else {
+        return Ok(Response::with((status::InternalServerError, "couldn't read records from database")));
+    }
+    let content_type = Mime(
+        TopLevel::Application, SubLevel::Json, Vec::new());
+
+    Ok(Response::with(
+        (content_type, status::Ok, json_record.unwrap())))
 }
