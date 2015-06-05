@@ -59,7 +59,7 @@ pub fn format(rs: &[Record]) {
         |acc, ref item|
         if item.name.len() > acc { item.name.len() } else { acc });
     for v in rs {
-        println!("{:3?}   {:.*}   {}", v.id, max, v.name, v.phone);
+        println!("{:3?}   {:.*}   {}", v.id.unwrap(), max, v.name, v.phone);
     }
 }
 
