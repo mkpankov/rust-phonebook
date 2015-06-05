@@ -14,7 +14,7 @@ pub fn remove(db: Connection, ids: &[i32]) -> ::postgres::Result<u64> {
     Ok(0)
 }
 
-pub fn update(db: Connection, id: i32, name: &str, phone: &str)
+pub fn update(db: &Connection, id: i32, name: &str, phone: &str)
           -> ::postgres::Result<()> {
     let tx: ::postgres::Transaction = db.transaction().unwrap();
     tx.execute(

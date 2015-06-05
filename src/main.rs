@@ -95,7 +95,7 @@ fn main() {
                         panic!("Usage: phonebook edit ID NAME PHONE");
                     }
                     let id = args[2].parse().unwrap();
-                    db::update(db, id, &args[3], &args[4])
+                    db::update(&db, id, &args[3], &args[4])
                         .unwrap();
                 },
                 "show" => {
@@ -135,10 +135,13 @@ fn main() {
                                 move |req: &mut Request|
                                 add_record(sdb_.clone(), req));
                     }
+                    {
+                        let sdb_ = sdb.clone();
+                        router.put("/api/v1/records/:id",
+                                   move |req: &mut Request|
+                                   update_record(sdb_.clone(), req));
+                    }
 
-                    router.put("/api/v1/records/:id",
-                               |_req: &mut Request|
-                               Ok(Response::with((status::Ok, "put_record"))));
                     router.delete("/api/v1/records/:id",
                                   |_req: &mut Request|
                                   Ok(Response::with((status::Ok, "delete_record"))));
@@ -196,7 +199,7 @@ fn get_record(sdb: Arc<Mutex<Connection>>, req: &mut Request) -> IronResult<Resp
     if let Ok(r) = sid.parse() {
         id = r;
     } else {
-        return Ok(Response::with((status::BadRequest, "bad id")));        
+        return Ok(Response::with((status::BadRequest, "bad id")));
     }
 
     let mut json_record;
@@ -221,10 +224,41 @@ fn add_record(sdb: Arc<Mutex<Connection>>, req: &mut Request) -> IronResult<Resp
     req.body.read_to_string(&mut body).unwrap();
     let decoded: json::DecodeResult<db::Record> = json::decode(&body);
     if let Ok(record) = decoded {
+        if record.name == "" || record.phone == "" {
+            return Ok(Response::with((status::BadRequest, "empty name or phone")))
+        }
         if let Ok(_) = db::insert(&*sdb.lock().unwrap(), &record.name, &record.phone) {
             Ok(Response::with((status::Created)))
         } else {
             Ok(Response::with((status::InternalServerError, "couldn't insert record")))
+        }
+    } else {
+        return Ok(Response::with((status::BadRequest, "couldn't decode JSON")));
+    }
+}
+
+fn update_record(sdb: Arc<Mutex<Connection>>, req: &mut Request) -> IronResult<Response> {
+    let url = req.url.clone().into_generic_url();
+    let path = url.path().unwrap();
+    let sid: &str = &path.iter().last().unwrap();
+    let id;
+    if let Ok(r) = sid.parse() {
+        id = r;
+    } else {
+        return Ok(Response::with((status::BadRequest, "bad id")));
+    }
+
+    let mut body = String::new();
+    req.body.read_to_string(&mut body).unwrap();
+    let decoded: json::DecodeResult<db::Record> = json::decode(&body);
+    if let Ok(record) = decoded {
+        if record.name == "" || record.phone == "" {
+            return Ok(Response::with((status::BadRequest, "empty name or phone")))
+        }
+        if let Ok(_) = db::update(&*sdb.lock().unwrap(), id, &record.name, &record.phone) {
+            Ok(Response::with((status::NoContent)))
+        } else {
+            Ok(Response::with((status::NotFound, "couldn't update record")))
         }
     } else {
         return Ok(Response::with((status::BadRequest, "couldn't decode JSON")));
