@@ -87,7 +87,7 @@ fn main() {
                         .map(|s| s.parse().unwrap())
                         .collect();
 
-                    db::remove(db, &ids)
+                    db::remove(&db, &ids)
                         .unwrap();
                 },
                 "edit" => {
@@ -141,10 +141,14 @@ fn main() {
                                    move |req: &mut Request|
                                    update_record(sdb_.clone(), req));
                     }
+                    {
+                        let sdb_ = sdb.clone();
+                        router.delete("/api/v1/records/:id",
+                                      move |req: &mut Request|
+                                      delete_record(sdb_.clone(), req));
 
-                    router.delete("/api/v1/records/:id",
-                                  |_req: &mut Request|
-                                  Ok(Response::with((status::Ok, "delete_record"))));
+                    }
+
                     Iron::new(router).http("localhost:3000").unwrap();
                 }
                 command @ _  => panic!(
@@ -262,5 +266,24 @@ fn update_record(sdb: Arc<Mutex<Connection>>, req: &mut Request) -> IronResult<R
         }
     } else {
         return Ok(Response::with((status::BadRequest, "couldn't decode JSON")));
+    }
+}
+
+
+fn delete_record(sdb: Arc<Mutex<Connection>>, req: &mut Request) -> IronResult<Response> {
+    let url = req.url.clone().into_generic_url();
+    let path = url.path().unwrap();
+    let sid: &str = &path.iter().last().unwrap();
+    let id;
+    if let Ok(r) = sid.parse() {
+        id = r;
+    } else {
+        return Ok(Response::with((status::BadRequest, "bad id")));
+    }
+
+    if let Ok(_) = db::remove(&*sdb.lock().unwrap(), &[id]) {
+        Ok(Response::with((status::NoContent)))
+    } else {
+        Ok(Response::with((status::NotFound, "couldn't update record")))
     }
 }

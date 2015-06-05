@@ -6,7 +6,7 @@ pub fn insert(db: &Connection, name: &str, phone: &str) -> ::postgres::Result<u6
     db.execute("INSERT INTO phonebook VALUES (default, $1, $2)", &[&name, &phone])
 }
 
-pub fn remove(db: Connection, ids: &[i32]) -> ::postgres::Result<u64> {
+pub fn remove(db: &Connection, ids: &[i32]) -> ::postgres::Result<u64> {
     let stmt = db.prepare("DELETE FROM phonebook WHERE id=$1").unwrap();
     for id in ids {
         try!(stmt.execute(&[id]));
