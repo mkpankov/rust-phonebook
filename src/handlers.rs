@@ -24,7 +24,7 @@ pub fn get_records(sdb: Arc<Mutex<Connection>>, req: &mut Request) -> IronResult
         }
     }
 
-    let mut json_records;
+    let json_records;
     if let Ok(recs) = ::db::read(sdb, name.as_ref().map(|s| &s[..])) {
         use rustc_serialize::json;
         if let Ok(json) = json::encode(&recs) {
@@ -53,7 +53,7 @@ pub fn get_record(sdb: Arc<Mutex<Connection>>, req: &mut Request) -> IronResult<
         return Ok(Response::with((status::BadRequest, "bad id")));
     }
 
-    let mut json_record;
+    let json_record;
     if let Ok(recs) = ::db::read_one(sdb, id) {
         if let Ok(json) = json::encode(&recs) {
             json_record = Some(json);
