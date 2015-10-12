@@ -42,13 +42,13 @@ fn params() -> (ConnectParams, SslMode) {
     };
 
     (ConnectParams {
-        target: ConnectTarget::Tcp(host.clone().into_owned()),
+        target: ConnectTarget::Tcp(host.clone()),
         port: Some(FromStr::from_str(port).ok().unwrap()),
         user: Some(UserInfo {
-            user: user.clone().into_owned(),
-            password: Some(pass.clone().into_owned()),
+            user: user.clone(),
+            password: Some(pass.clone()),
         }),
-        database: Some(dbname.clone().into_owned()),
+        database: Some(dbname.clone()),
         options: vec![],
     }, s)
 }
