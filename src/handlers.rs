@@ -9,19 +9,16 @@ use std::sync::{Arc, Mutex};
 pub fn get_records(sdb: Arc<Mutex<Connection>>, req: &mut Request) -> IronResult<Response> {
     let url = req.url.clone().into_generic_url();
     let mut name: Option<String> = None;
-    if let Some(qp) = url.query_pairs() {
-        for (key, value) in qp {
-            match (&key[..], value) {
-                ("name", n) => {
-                    if let None = name {
-                        name = Some(n);
-                    } else {
-                        return Ok(Response::with((status::BadRequest, "passed name in query more than once")));
-                    }
-                }
-                _ => return Ok(Response::with((status::BadRequest, "unexpected query parameters"))),
-            }
+    if let Some(mut qp) = url.query_pairs() {
+        if qp.len() != 1 {
+            return Ok(Response::with((status::BadRequest, "passed more than one parameter or no parameters at all")));
         }
+        let (key, value) = qp.pop().unwrap();
+        if &key[..] == "name" {
+            name = Some(value);
+        }
+    } else {
+        return Ok(Response::with((status::BadRequest, "passed names don’t parse as application/x-www-form-urlencoded or there are no parameters")));
     }
 
     let json_records;
