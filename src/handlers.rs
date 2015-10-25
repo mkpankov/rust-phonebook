@@ -14,7 +14,7 @@ pub fn get_records(sdb: Arc<Mutex<Connection>>, req: &mut Request) -> IronResult
             return Ok(Response::with((status::BadRequest, "passed more than one parameter or no parameters at all")));
         }
         let (key, value) = qp.pop().unwrap();
-        if &key[..] == "name" {
+        if key == "name" {
             name = Some(value);
         }
     } else {
