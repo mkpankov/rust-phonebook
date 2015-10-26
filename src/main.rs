@@ -116,34 +116,34 @@ fn main() {
                     let sdb = Arc::new(Mutex::new(db));
                     let mut router = router::Router::new();
                     {
-                        let sdb_ = sdb.clone();
+                        let sdb = sdb.clone();
                         router.get("/api/v1/records",
                                    move |req: &mut Request|
-                                   handlers::get_records(sdb_.clone(), req));
+                                   handlers::get_records(&*sdb, req));
                     }
                     {
-                        let sdb_ = sdb.clone();
+                        let sdb = sdb.clone();
                         router.get("/api/v1/records/:id",
                                    move |req: &mut Request|
-                                   handlers::get_record(sdb_.clone(), req));
+                                   handlers::get_record(&*sdb, req));
                     }
                     {
-                        let sdb_ = sdb.clone();
+                        let sdb = sdb.clone();
                         router.post("/api/v1/records",
                                 move |req: &mut Request|
-                                handlers::add_record(sdb_.clone(), req));
+                                handlers::add_record(&*sdb, req));
                     }
                     {
-                        let sdb_ = sdb.clone();
+                        let sdb = sdb.clone();
                         router.put("/api/v1/records/:id",
                                    move |req: &mut Request|
-                                   handlers::update_record(sdb_.clone(), req));
+                                   handlers::update_record(&*sdb, req));
                     }
                     {
-                        let sdb_ = sdb.clone();
+                        let sdb = sdb.clone();
                         router.delete("/api/v1/records/:id",
                                       move |req: &mut Request|
-                                      handlers::delete_record(sdb_.clone(), req));
+                                      handlers::delete_record(&*sdb, req));
 
                     }
 

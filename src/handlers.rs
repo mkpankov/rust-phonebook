@@ -4,9 +4,9 @@ use postgres::Connection;
 use rustc_serialize::json;
 
 use std::io::Read;
-use std::sync::{Arc, Mutex};
+use std::sync::{Mutex};
 
-pub fn get_records(sdb: Arc<Mutex<Connection>>, req: &mut Request) -> IronResult<Response> {
+pub fn get_records(sdb: &Mutex<Connection>, req: &mut Request) -> IronResult<Response> {
     let url = req.url.clone().into_generic_url();
     let mut name: Option<String> = None;
     if let Some(mut qp) = url.query_pairs() {
@@ -39,7 +39,7 @@ pub fn get_records(sdb: Arc<Mutex<Connection>>, req: &mut Request) -> IronResult
         (content_type, status::Ok, json_records.unwrap())))
 }
 
-pub fn get_record(sdb: Arc<Mutex<Connection>>, req: &mut Request) -> IronResult<Response> {
+pub fn get_record(sdb: &Mutex<Connection>, req: &mut Request) -> IronResult<Response> {
     let url = req.url.clone().into_generic_url();
     let path = url.path().unwrap();
     let sid: &str = &path.iter().last().unwrap();
@@ -67,7 +67,7 @@ pub fn get_record(sdb: Arc<Mutex<Connection>>, req: &mut Request) -> IronResult<
         (content_type, status::Ok, json_record.unwrap())))
 }
 
-pub fn add_record(sdb: Arc<Mutex<Connection>>, req: &mut Request) -> IronResult<Response> {
+pub fn add_record(sdb: &Mutex<Connection>, req: &mut Request) -> IronResult<Response> {
     let mut body = String::new();
     req.body.read_to_string(&mut body).unwrap();
     let decoded: json::DecodeResult<::db::Record> = json::decode(&body);
@@ -85,7 +85,7 @@ pub fn add_record(sdb: Arc<Mutex<Connection>>, req: &mut Request) -> IronResult<
     }
 }
 
-pub fn update_record(sdb: Arc<Mutex<Connection>>, req: &mut Request) -> IronResult<Response> {
+pub fn update_record(sdb: &Mutex<Connection>, req: &mut Request) -> IronResult<Response> {
     let url = req.url.clone().into_generic_url();
     let path = url.path().unwrap();
     let sid: &str = &path.iter().last().unwrap();
@@ -114,7 +114,7 @@ pub fn update_record(sdb: Arc<Mutex<Connection>>, req: &mut Request) -> IronResu
 }
 
 
-pub fn delete_record(sdb: Arc<Mutex<Connection>>, req: &mut Request) -> IronResult<Response> {
+pub fn delete_record(sdb: &Mutex<Connection>, req: &mut Request) -> IronResult<Response> {
     let url = req.url.clone().into_generic_url();
     let path = url.path().unwrap();
     let sid: &str = &path.iter().last().unwrap();

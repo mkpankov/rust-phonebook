@@ -1,6 +1,6 @@
 use postgres::{Connection};
 
-use std::sync::{Arc, Mutex};
+use std::sync::{Mutex};
 
 pub fn insert(db: &Connection, name: &str, phone: &str) -> ::postgres::Result<u64> {
     db.execute("INSERT INTO phonebook VALUES (default, $1, $2)", &[&name, &phone])
@@ -63,7 +63,7 @@ pub fn format(rs: &[Record]) {
     }
 }
 
-pub fn read(sdb: Arc<Mutex<Connection>>, name: Option<&str>) -> Result<Vec<Record>, ()> {
+pub fn read(sdb: &Mutex<Connection>, name: Option<&str>) -> Result<Vec<Record>, ()> {
     if let Ok(rs) = show(&*sdb.lock().unwrap(), name) {
         Ok(rs)
     } else {
@@ -71,7 +71,7 @@ pub fn read(sdb: Arc<Mutex<Connection>>, name: Option<&str>) -> Result<Vec<Recor
     }
 }
 
-pub fn read_one(sdb: Arc<Mutex<Connection>>, id: i32) -> Result<Record, ()> {
+pub fn read_one(sdb: &Mutex<Connection>, id: i32) -> Result<Record, ()> {
     let db = &*sdb.lock().unwrap();
     let stmt = db.prepare(
         "SELECT * FROM phonebook WHERE id = $1"
