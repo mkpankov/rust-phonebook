@@ -149,7 +149,7 @@ fn main() {
 
                     Iron::new(router).http("localhost:3000").unwrap();
                 }
-                command @ _  => panic!(
+                command => panic!(
                     format!("Invalid command: {}", command))
             }
         }
