@@ -117,7 +117,7 @@ macro_rules! clone_pass_bound {
 }
 
 macro_rules! define_handler {
-    ($connection:ident, $router: ident.$method:ident, $route:expr,
+    ($connection:ident, $router:ident.$method:ident, $route:expr,
      $handler:path) => {
         clone_pass_bound!(
             $connection,
@@ -128,21 +128,24 @@ macro_rules! define_handler {
     }
 }
 
+macro_rules! define_handlers_family {
+    ($connection:ident, $router:ident,
+     $( [$method:ident, $route:expr, $handler:path]),+ ) => {
+        $( define_handler!($connection, $router.$method, $route, $handler); )+
+    }
+}
+
 fn serve(db: Connection) {
     let sdb = Arc::new(Mutex::new(db));
     let mut router = router::Router::new();
-    define_handler!(sdb, router.get, "/api/v1/records", handlers::get_records);
 
-    define_handler!(sdb, router.get, "/api/v1/records/:id",
-                    handlers::get_record);
-
-    define_handler!(sdb, router.post, "/api/v1/records", handlers::add_record);
-
-    define_handler!(sdb, router.put, "/api/v1/records/:id",
-                    handlers::update_record);
-
-    define_handler!(sdb, router.delete, "/api/v1/records/:id",
-                    handlers::delete_record);
+    define_handlers_family!(
+        sdb, router,
+        [get, "/api/v1/records", handlers::get_records],
+        [get, "/api/v1/records/:id", handlers::get_record],
+        [post, "/api/v1/records", handlers::add_record],
+        [put, "/api/v1/records/:id", handlers::update_record],
+        [delete, "/api/v1/records/:id", handlers::delete_record]);
 
     Iron::new(router).http("localhost:3000").unwrap();
 }
