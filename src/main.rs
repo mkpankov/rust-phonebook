@@ -50,7 +50,8 @@ fn params() -> (ConnectParams, SslMode) {
         }),
         database: Some(dbname.clone()),
         options: vec![],
-    }, s)
+    },
+     s)
 }
 
 fn init_db(db: &Connection) {
@@ -59,16 +60,15 @@ fn init_db(db: &Connection) {
                 r#"("id" SERIAL PRIMARY KEY, "name" varchar(50),"#,
                 r#" "phone" varchar(100))"#,
                 ),
-        &[])
-        .unwrap();
+               &[])
+      .unwrap();
 }
 
 fn add(db: &Connection, args: &Vec<String>) {
     if args.len() != 4 {
         panic!("Usage: phonebook add NAME PHONE");
     }
-    let r = db::insert(&db, &args[2], &args[3])
-        .unwrap();
+    let r = db::insert(&db, &args[2], &args[3]).unwrap();
     println!("{} rows affected", r);
 }
 
@@ -76,12 +76,12 @@ fn del(db: &Connection, args: &Vec<String>) {
     if args.len() < 3 {
         panic!("Usage: phonebook del ID...");
     }
-    let ids: Vec<i32> = args[2..].iter()
-        .map(|s| s.parse().unwrap())
-        .collect();
+    let ids: Vec<i32> = args[2..]
+                            .iter()
+                            .map(|s| s.parse().unwrap())
+                            .collect();
 
-    db::remove(&db, &ids)
-        .unwrap();
+    db::remove(&db, &ids).unwrap();
 }
 
 fn edit(db: &Connection, args: &Vec<String>) {
@@ -89,8 +89,7 @@ fn edit(db: &Connection, args: &Vec<String>) {
         panic!("Usage: phonebook edit ID NAME PHONE");
     }
     let id = args[2].parse().unwrap();
-    db::update(&db, id, &args[3], &args[4])
-        .unwrap();
+    db::update(&db, id, &args[3], &args[4]).unwrap();
 }
 
 fn show(db: &Connection, args: &Vec<String>) {
@@ -167,8 +166,7 @@ fn main() {
                 "show" => show(&db, &args),
                 "help" => println!("{}", HELP),
                 "serve" => serve(db),
-                command => panic!(
-                    format!("Invalid command: {}", command))
+                command => panic!(format!("Invalid command: {}", command)),
             }
         }
         None => panic!("No command supplied"),

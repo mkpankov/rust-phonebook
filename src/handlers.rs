@@ -4,21 +4,24 @@ use postgres::Connection;
 use rustc_serialize::json;
 
 use std::io::Read;
-use std::sync::{Mutex};
+use std::sync::Mutex;
 
 pub fn get_records(sdb: &Mutex<Connection>, req: &mut Request) -> IronResult<Response> {
     let url = req.url.clone().into_generic_url();
     let mut name: Option<String> = None;
     if let Some(mut qp) = url.query_pairs() {
         if qp.len() != 1 {
-            return Ok(Response::with((status::BadRequest, "passed more than one parameter or no parameters at all")));
+            return Ok(Response::with((status::BadRequest,
+                                      "passed more than one parameter or no parameters at all")));
         }
         let (key, value) = qp.pop().unwrap();
         if key == "name" {
             name = Some(value);
         }
     } else {
-        return Ok(Response::with((status::BadRequest, "passed names don’t parse as application/x-www-form-urlencoded or there are no parameters")));
+        return Ok(Response::with((status::BadRequest,
+                                  "passed names don’t parse as application/x-www-form-urlencoded \
+                                   or there are no parameters")));
     }
 
     let json_records;
@@ -27,16 +30,16 @@ pub fn get_records(sdb: &Mutex<Connection>, req: &mut Request) -> IronResult<Res
         if let Ok(json) = json::encode(&recs) {
             json_records = Some(json);
         } else {
-            return Ok(Response::with((status::InternalServerError, "couldn't convert records to JSON")));
+            return Ok(Response::with((status::InternalServerError,
+                                      "couldn't convert records to JSON")));
         }
     } else {
-        return Ok(Response::with((status::InternalServerError, "couldn't read records from database")));
+        return Ok(Response::with((status::InternalServerError,
+                                  "couldn't read records from database")));
     }
-    let content_type = Mime(
-        TopLevel::Application, SubLevel::Json, Vec::new());
+    let content_type = Mime(TopLevel::Application, SubLevel::Json, Vec::new());
 
-    Ok(Response::with(
-        (content_type, status::Ok, json_records.unwrap())))
+    Ok(Response::with((content_type, status::Ok, json_records.unwrap())))
 }
 
 pub fn get_record(sdb: &Mutex<Connection>, req: &mut Request) -> IronResult<Response> {
@@ -55,16 +58,16 @@ pub fn get_record(sdb: &Mutex<Connection>, req: &mut Request) -> IronResult<Resp
         if let Ok(json) = json::encode(&recs) {
             json_record = Some(json);
         } else {
-            return Ok(Response::with((status::InternalServerError, "couldn't convert records to JSON")));
+            return Ok(Response::with((status::InternalServerError,
+                                      "couldn't convert records to JSON")));
         }
     } else {
-        return Ok(Response::with((status::InternalServerError, "couldn't read records from database")));
+        return Ok(Response::with((status::InternalServerError,
+                                  "couldn't read records from database")));
     }
-    let content_type = Mime(
-        TopLevel::Application, SubLevel::Json, Vec::new());
+    let content_type = Mime(TopLevel::Application, SubLevel::Json, Vec::new());
 
-    Ok(Response::with(
-        (content_type, status::Ok, json_record.unwrap())))
+    Ok(Response::with((content_type, status::Ok, json_record.unwrap())))
 }
 
 pub fn add_record(sdb: &Mutex<Connection>, req: &mut Request) -> IronResult<Response> {
@@ -73,7 +76,7 @@ pub fn add_record(sdb: &Mutex<Connection>, req: &mut Request) -> IronResult<Resp
     let decoded: json::DecodeResult<::db::Record> = json::decode(&body);
     if let Ok(record) = decoded {
         if record.name == "" || record.phone == "" {
-            return Ok(Response::with((status::BadRequest, "empty name or phone")))
+            return Ok(Response::with((status::BadRequest, "empty name or phone")));
         }
         if let Ok(_) = ::db::insert(&*sdb.lock().unwrap(), &record.name, &record.phone) {
             Ok(Response::with((status::Created)))
@@ -101,7 +104,7 @@ pub fn update_record(sdb: &Mutex<Connection>, req: &mut Request) -> IronResult<R
     let decoded: json::DecodeResult<::db::Record> = json::decode(&body);
     if let Ok(record) = decoded {
         if record.name == "" || record.phone == "" {
-            return Ok(Response::with((status::BadRequest, "empty name or phone")))
+            return Ok(Response::with((status::BadRequest, "empty name or phone")));
         }
         if let Ok(_) = ::db::update(&*sdb.lock().unwrap(), id, &record.name, &record.phone) {
             Ok(Response::with((status::NoContent)))
